@@ -31,7 +31,6 @@ try {
 /** What each example shows. Ids come from the environment; the browser only learns the non-secret ones. */
 const demo = {
   courseId: Number(env.HB_SANDBOX_COURSE_ID) || null,
-  testId: Number(env.HB_SANDBOX_TEST_ID) || null,
   candidateRef: env.HB_CANDIDATE_REF || null,
   ohRequestId: Number(env.HB_OH_REQUEST_ID) || null,
   ohFormShortcode: env.HB_OH_FORM_SHORTCODE || null,
@@ -50,7 +49,8 @@ function authorize({ intent }) {
   if (intent.kind === 'course' && intent.courseId === demo.courseId && demo.candidateRef) {
     return { candidateRef: demo.candidateRef };
   }
-  if (intent.kind === 'test' && intent.courseId === demo.testId && demo.candidateRef) {
+  // A test session is asked for with the course id: Hub opens the test of that course.
+  if (intent.kind === 'test' && intent.courseId === demo.courseId && demo.candidateRef) {
     return { candidateRef: demo.candidateRef };
   }
   if (intent.kind === 'oh_form' && intent.formShortcode === demo.ohFormShortcode && demo.ohRequestId) {
@@ -110,7 +110,7 @@ const server = createServer(async (req, res) => {
     if (pathname === '/api/config' && req.method === 'GET') {
       // Non-secret values only: never the key, the candidate or the OH request.
       res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
-      res.end(JSON.stringify({ courseId: demo.courseId, testId: demo.testId, formShortcode: demo.ohFormShortcode, environment: hb.environment }));
+      res.end(JSON.stringify({ courseId: demo.courseId, formShortcode: demo.ohFormShortcode, environment: hb.environment }));
       return;
     }
 
@@ -146,7 +146,7 @@ const server = createServer(async (req, res) => {
 server.listen(port, () => {
   console.log(`Healthier Business SDK examples on ${appOrigin}`);
   console.log(`Hub: ${hb.baseUrl} (${hb.environment}, key ${hb.keyPrefix})`);
-  const missing = Object.entries({ HB_CANDIDATE_REF: demo.candidateRef, HB_SANDBOX_COURSE_ID: demo.courseId, HB_SANDBOX_TEST_ID: demo.testId, HB_OH_REQUEST_ID: demo.ohRequestId, HB_OH_FORM_SHORTCODE: demo.ohFormShortcode })
+  const missing = Object.entries({ HB_CANDIDATE_REF: demo.candidateRef, HB_SANDBOX_COURSE_ID: demo.courseId, HB_OH_REQUEST_ID: demo.ohRequestId, HB_OH_FORM_SHORTCODE: demo.ohFormShortcode })
     .filter(([, value]) => !value)
     .map(([name]) => name);
   if (missing.length) {
