@@ -1,6 +1,6 @@
 # Healthier Business Hub SDK examples
 
-Three small, working examples of the [Healthier Business Hub SDK](https://github.com/Healthier-Business/hb-sdk) (`@healthier-business/hub-sdk`): an **online training course**, a **test** and an **occupational health (OH) form**, each shown inline in your own page.
+Three small, working examples of the [Healthier Business Hub SDK](https://www.npmjs.com/package/@healthier-business/hub-sdk) (`@healthier-business/hub-sdk`): an **online training course**, a **test** and an **occupational health (OH) form**, each shown inline in your own page.
 
 Each example is plain HTML and JavaScript in the browser, plus one tiny Node server (`node:http`, no framework, no dependencies except the SDK). The server holds your API key and creates the embed session. The browser only receives a short-lived, single-use launch token.
 
@@ -187,7 +187,7 @@ The frame resizes itself and the SDK follows, so the page grows with the content
 
 ## Using a local copy of the SDK
 
-The SDK may not be published yet. To develop against a local checkout (built with `npm run build` in `hb-sdk`):
+The SDK is installed from npm ([`@healthier-business/hub-sdk`](https://www.npmjs.com/package/@healthier-business/hub-sdk)) by `npm install`. Only if you work on the SDK itself, develop against a local checkout (built with `npm run build` in `hb-sdk`):
 
 ```bash
 # without touching package.json
@@ -197,7 +197,7 @@ npm install --no-save ../hb-sdk
 cd ../hb-sdk && npm link && cd ../hb-sdk-examples && npm link @healthier-business/hub-sdk
 ```
 
-`package.json` keeps the normal range `^0.1.0`, so it works unchanged once the package is published. There is no lock file for the same reason (`.npmrc` sets `package-lock=false`).
+`package.json` keeps the normal range `^0.1.0`, so it works unchanged with the package from npm. There is no lock file (`.npmrc` sets `package-lock=false`), so every install picks the newest `0.1.x`.
 
 ## License
 
