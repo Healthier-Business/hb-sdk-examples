@@ -1,0 +1,17 @@
+{
+  "name": "hb-sdk-examples",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Examples for the Healthier Business Hub SDK: an embedded course, test and occupational health form.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20.12"
+  },
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "@healthier-business/hub-sdk": "^0.1.0"
+  }
+}
