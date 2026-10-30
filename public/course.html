@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Embedded course</title>
+  <link rel="stylesheet" href="/demo.css" />
+</head>
+<body>
+  <main>
+    <nav><a href="/">All examples</a></nav>
+    <h1>Embedded course</h1>
+    <p class="lead">A course shown inline. The progress bar and the result below are drawn from events the frame sends.</p>
+
+    <div class="card">
+      <div class="row">
+        <span id="status" class="status">Starting...</span>
+        <div class="bar" aria-hidden="true"><div id="bar"></div></div>
+        <button id="restart" type="button">Start again</button>
+      </div>
+    </div>
+
+    <div id="frame" class="frame"></div>
+
+    <div id="result" class="card" hidden>
+      <h2 id="result-title"></h2>
+      <p id="result-details"></p>
+    </div>
+
+    <div class="card">
+      <h2>Events from the frame</h2>
+      <pre id="log"></pre>
+    </div>
+  </main>
+  <script src="/vendor/hb-embed.min.js"></script>
+  <script src="/demo.js"></script>
+  <script src="/course.js"></script>
+</body>
+</html>
