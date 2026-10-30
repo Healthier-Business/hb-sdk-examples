@@ -7,9 +7,8 @@ Each example is plain HTML and JavaScript in the browser, plus one tiny Node ser
 ## Prerequisites
 
 - Node.js 20.12 or newer
-- A Hub **sandbox** API key, asked for from the Hub team (see [The sandbox](#the-sandbox)). It carries the Online Training embed scope.
-- For the OH form example only: an Occupational Health request and form of your own, and a key with `occupational-health:embed:create` (the sandbox has none)
-- Your page on `http://localhost:3000` (the sandbox accepts it with no set-up; a real account registers its page under **Developer > Embed** in Hub)
+- A sandbox **test key** (`hbk_test_...`) from the developer portal (see [The sandbox](#the-sandbox))
+- Your page on `http://localhost:3000` (the sandbox always accepts `http://localhost` on any port; a real account registers its page under **Developer > Embed** in Hub)
 
 ## Quick start
 
@@ -42,24 +41,25 @@ Each example is plain HTML and JavaScript in the browser, plus one tiny Node ser
 
 6. Open <http://localhost:3000>. Pick an example: `/course`, `/test` or `/oh-form`.
 
-The server prints which settings are missing. An example whose id is not set shows a message instead of a frame. With the sandbox values only `/course` and `/test` open; `/oh-form` needs values you supply (see below).
+The server prints which settings are missing. An example whose id is not set shows a message instead of a frame. With the sandbox values `/course`, `/test` and `/oh-form` all open.
 
 ## The sandbox
 
-Hub has a fixed sandbox: one dedicated Online Training client. A sandbox key reaches nothing of a real client, and its catalogue holds only the sandbox course (a lorem ipsum course with a five-question test). It lives on the normal Hub address. Anything other than the sandbox course answers `404 not_found`.
+The sandbox is a safe copy of the Hub API with demo data, run by the Healthier Business developer platform. A sandbox key never reaches the real Hub and nothing is sent or charged.
+
+1. In the developer portal (`https://dev.hbcompliance.co.uk`) create a sandbox and a test key. The key starts `hbk_test_` and is shown once, so store it at once in `.env` as `HB_API_KEY`. It is never committed and never goes in the browser.
+2. The sandbox page has an **Embed** section with your exact base URL and the demo ids. `http://localhost` on any port is always allowed, so no origin set-up is needed for this repo.
 
 | What | Value | `.env` |
 | --- | --- | --- |
-| Hub address | `https://hub.hbcompliance.co.uk` | `HB_BASE_URL` |
-| Client | `900001` | |
-| Course (Online Training course id) | `900001`. Used for the course session **and** for the test session | `HB_SANDBOX_COURSE_ID` |
-| Test | `900001`. For reference only: a test session is created with the course id, Hub finds the test of that course | `HB_SANDBOX_TEST_ID` |
-| Candidate | id `900001`, `candidate_ref` `5a4d0b1e-0000-4000-8000-000000900001` | `HB_CANDIDATE_REF` |
-| Pages accepted with no set-up | `http://localhost:3000`, `:5173`, `:8000`, `:8080` | `APP_ORIGIN` |
+| Sandbox address (the SDK adds `/api/v2`) | `https://dev.hbcompliance.co.uk/sandbox` | `HB_BASE_URL` |
+| Candidate | `candidate_ref` `5a4d0b1e-0000-4000-8000-0000000000d1` | `HB_CANDIDATE_REF` |
+| Course. Used for the course session **and** for the test session | `1` (courses `1` to `8` work; `9` answers `409 course_not_embeddable`) | `HB_SANDBOX_COURSE_ID` |
+| OH request | `999` | `HB_OH_REQUEST_ID` |
+| OH form | `clinical_occupational_health` (also `non_clinical_occupational_health`, `student_health`) | `HB_OH_FORM_SHORTCODE` |
+| Pages accepted with no set-up | `http://localhost` on any port | `APP_ORIGIN` |
 
-**The key.** Ask the Hub team for a sandbox key. They issue it with `php artisan sandbox:issue-key`; it is shown once, so store it at once in `.env` as `HB_API_KEY`. The key is never committed and never goes in the browser.
-
-**The OH form is not in the sandbox.** There is no sandbox Occupational Health request, and the sandbox key has no `occupational-health:embed:create` scope. The `/oh-form` example is complete code but cannot run against the sandbox. To try it, supply from an OH account of your own: a key with that scope (`HB_API_KEY`), the numeric id of an OH request that still has a form to answer (`HB_OH_REQUEST_ID`), that form's shortcode from `GET /requests/{id}/questionnaire` (`HB_OH_FORM_SHORTCODE`), and your page's address registered under Developer > Embed. Until then those two variables stay empty.
+A course or test the candidate has finished answers `409 course_not_pending` until you reset the sandbox in the developer portal.
 
 ## How the pieces fit
 
@@ -116,7 +116,7 @@ Same shape with `kind: 'test'`. The page shows the result of `passed` or `failed
 HealthierBusiness.mount(el, {
   endpoint: '/api/hb/embed',
   kind: 'test',
-  courseId: config.courseId, // the COURSE id (900001), not the test id
+  courseId: config.courseId, // the COURSE id, not a test id
   onPassed: ({ score, passMark }) => showResult('Passed', `Score ${score}, pass mark ${passMark}`),
   onFailed: ({ score, passMark }) => showResult('Not passed', `Score ${score}, pass mark ${passMark}`),
 });
@@ -176,7 +176,7 @@ The frame resizes itself and the SDK follows, so the page grows with the content
 
 | Symptom | Likely cause | What to do |
 | --- | --- | --- |
-| The frame is refused, or the page shows `origin_not_allowed` or a `422` on `origin` | The page's origin is not allowed | On the sandbox use one of `http://localhost:3000`, `:5173`, `:8000` or `:8080`. On a real account register your `APP_ORIGIN` under Developer > Embed in Hub, and keep `APP_ORIGIN`, the address in the browser bar and the registered address identical, including the port. |
+| The frame is refused, or the page shows `origin_not_allowed` or a `422` on `origin` | The page's origin is not allowed | On the sandbox use `http://localhost` on any port. On a real account register your `APP_ORIGIN` under Developer > Embed in Hub, and keep `APP_ORIGIN`, the address in the browser bar and the registered address identical, including the port. |
 | The frame is blank, or `frame_timeout` appears | The browser blocked the frame, or the session ended | Check the console for Content-Security-Policy messages (the server allows framing only `HB_BASE_URL`'s origin), turn off ad blockers and privacy extensions for localhost, and check the network tab for the frame request. |
 | `session_expired` or `410` | 60 minutes passed without a refresh, or 12 hours in all | Press "Start again" or reload to create a new session. |
 | `token_used` or `token_expired` | The launch token was used twice, or sat unused for over 5 minutes | Reload. Each mount creates a new session. |
@@ -184,7 +184,6 @@ The frame resizes itself and the SDK follows, so the page grows with the content
 | `401` from `/api/hb/embed` | `authorize` refused | Check that the ids in `.env` are set and match what the page asks for. |
 | `404` or `409` when creating a session | The id is not in the sandbox, or the candidate has finished it | Use the sandbox ids. A finished course (`course_not_pending`) cannot be reopened. |
 | The server says it cannot start | `HB_API_KEY` missing or not valid | Set `HB_API_KEY` in `.env` to the key you were issued. |
-| `403` creating the OH session | The sandbox key has no OH scope | The OH example needs a key and request of your own (see The sandbox). |
 
 ## Using a local copy of the SDK
 
