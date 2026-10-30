@@ -126,7 +126,7 @@ On the server this ends in `hb.embed.createTestSession({ candidateRef, courseId,
 
 ## Example 3: occupational health form (`/oh-form`)
 
-Shows one questionnaire of an OH request. It cannot run against the sandbox (see [The sandbox](#the-sandbox)); the code is complete and works with an OH request and key of your own. The browser sends only the form shortcode. The server returns the numeric request id from `authorize`, so a visitor cannot ask for another person's request.
+Shows one questionnaire of an OH request. It runs against the sandbox's demo request `999` (see [The sandbox](#the-sandbox)); on a real account use an OH request and key of your own. The browser sends only the form shortcode. The server returns the numeric request id from `authorize`, so a visitor cannot ask for another person's request.
 
 ```js
 // server
