@@ -19,7 +19,7 @@ Each example is plain HTML and JavaScript in the browser, plus one tiny Node ser
    cd hb-sdk-examples
    ```
 
-2. Install. (Example 4 needs SDK 0.2.0. Until that is on npm, see [Using a local copy of the SDK](#using-a-local-copy-of-the-sdk).)
+2. Install.
 
    ```bash
    npm install
@@ -151,7 +151,7 @@ On the server this ends in `hb.embed.createOhFormSession({ requestId, formShortc
 
 A course only opens once the candidate's training access is started, the terms are accepted and the access has not ended. The embed never starts access itself: **your server** does, through the API, and the page then opens the course as in example 1.
 
-> **Needs SDK 0.2.0** (`accessStart`, typed access errors, `onTermsAccepted`). It is not on npm yet, so use the local checkout for this example (see [Using a local copy of the SDK](#using-a-local-copy-of-the-sdk)). The Pactyard sandbox does not simulate the access calls yet, so do not expect this page to work against it yet. The page and routes were checked only against a local fake of the Hub.
+> **Needs SDK 0.2.0 or newer** (`accessStart`, typed access errors, `onTermsAccepted`). The Pactyard sandbox simulates these calls. To try each state, set `HB_CANDIDATE_REF` in `.env` to one of its demo candidates: `5a4d0b1e-0000-4000-8000-0000000000d2` (agency pays, access not started), `...00d3` (the candidate pays: you get a payment link), `...00d4` (terms not accepted yet), `...00d5` (a mix of both), `...00d6` (manual renewal waiting for approval). The sandbox page lists them too, and the documentation walks through each: <https://dev.hbcompliance.co.uk/sdk-start-access-and-payment>. Reset the sandbox in the developer portal to try a state again.
 
 The page has two steps:
 
@@ -220,7 +220,7 @@ The frame resizes itself and the SDK follows, so the page grows with the content
 | `401` from `/api/hb/embed` | `authorize` refused | Check that the ids in `.env` are set and match what the page asks for. |
 | `course_access_required`, `payment_pending`, `renewal_approval_required` or `access_expired` in the status line or log | The candidate's access is not in place. | Read `details.next`: start access (example 4), have the candidate pay the link, approve the renewal, or renew. |
 | `terms_required` in the log | The candidate has not accepted the terms. | The frame shows them first; the candidate accepts there. |
-| `/access` fails with `TypeError` or `accessStart is not a function` | The installed SDK is older than 0.2.0. | Use the local checkout of the SDK until 0.2.0 is on npm. |
+| `/access` fails with `TypeError` or `accessStart is not a function` | The installed SDK is older than 0.2.0. | Update the SDK: `npm install @healthier-business/hub-sdk@latest`. |
 | `404` or `409` when creating a session | The id is not in the sandbox, or the candidate has finished it | Use the sandbox ids. A finished course (`course_not_pending`) cannot be reopened. |
 | The server says it cannot start | `HB_API_KEY` missing or not valid | Set `HB_API_KEY` in `.env` to the key you were issued. |
 
@@ -236,7 +236,7 @@ npm install --no-save ../hb-sdk
 cd ../hb-sdk && npm link && cd ../hb-sdk-examples && npm link @healthier-business/hub-sdk
 ```
 
-**Example 4 needs SDK 0.2.0. Until it is published, `npm install` gets 0.1.x, which has no `accessStart`: install the local checkout (`npm install --no-save ../hb-sdk`, built with `npm run build`) before running `/access`.** `package.json` keeps the range `^0.1.0` so that `npm install` keeps working before the release; once 0.2.0 is on npm, change it to `^0.2.0`. There is no lock file (`.npmrc` sets `package-lock=false`), so every install picks the newest matching version.
+**Example 4 needs SDK 0.2.0 or newer.** `package.json` asks for `^0.2.0`. There is no lock file (`.npmrc` sets `package-lock=false`), so every install picks the newest matching version.
 
 ## License
 

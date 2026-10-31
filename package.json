@@ -12,6 +12,6 @@
     "start": "node server.mjs"
   },
   "dependencies": {
-    "@healthier-business/hub-sdk": "^0.1.0"
+    "@healthier-business/hub-sdk": "^0.2.0"
   }
 }
