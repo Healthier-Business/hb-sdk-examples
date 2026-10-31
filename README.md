@@ -1,6 +1,6 @@
 # Healthier Business Hub SDK examples
 
-Three small, working examples of the [Healthier Business Hub SDK](https://www.npmjs.com/package/@healthier-business/hub-sdk) (`@healthier-business/hub-sdk`): an **online training course**, a **test** and an **occupational health (OH) form**, each shown inline in your own page.
+Four small, working examples of the [Healthier Business Hub SDK](https://www.npmjs.com/package/@healthier-business/hub-sdk) (`@healthier-business/hub-sdk`): an **online training course**, a **test**, an **occupational health (OH) form**, each shown inline in your own page, and **starting a candidate's access** (credits, payment link or renewal approval) before the course opens.
 
 Each example is plain HTML and JavaScript in the browser, plus one tiny Node server (`node:http`, no framework, no dependencies except the SDK). The server holds your API key and creates the embed session. The browser only receives a short-lived, single-use launch token.
 
@@ -19,7 +19,7 @@ Each example is plain HTML and JavaScript in the browser, plus one tiny Node ser
    cd hb-sdk-examples
    ```
 
-2. Install. (Until the SDK is on npm, see [Using a local copy of the SDK](#using-a-local-copy-of-the-sdk).)
+2. Install. (Example 4 needs SDK 0.2.0. Until that is on npm, see [Using a local copy of the SDK](#using-a-local-copy-of-the-sdk).)
 
    ```bash
    npm install
@@ -39,9 +39,9 @@ Each example is plain HTML and JavaScript in the browser, plus one tiny Node ser
    npm start
    ```
 
-6. Open <http://localhost:3000>. Pick an example: `/course`, `/test` or `/oh-form`.
+6. Open <http://localhost:3000>. Pick an example: `/course`, `/test`, `/oh-form` or `/access`.
 
-The server prints which settings are missing. An example whose id is not set shows a message instead of a frame. With the sandbox values `/course`, `/test` and `/oh-form` all open.
+The server prints which settings are missing. An example whose id is not set shows a message instead of a frame. With the sandbox values `/course`, `/test` and `/oh-form` all open. `/access` needs a Hub (or sandbox) that supports the access calls; see [Example 4](#example-4-start-access-then-embed-access).
 
 ## The sandbox
 
@@ -74,6 +74,7 @@ browser                       your server (server.mjs)                  Hub
 
 - `server.mjs` creates the SDK client (`new HealthierBusiness()` reads `HB_API_KEY` and `HB_BASE_URL`) and one route, `POST /api/hb/embed`, with `hb.embed.handler(...)`. It also serves the pages in `public/` and the SDK's browser file at `/vendor/hb-embed.min.js`.
 - `public/course.js`, `public/test.js` and `public/oh-form.js` call `HealthierBusiness.mount(...)`.
+- `access.mjs` and `public/access.js` are example 4: the server routes that read and start access, and the page that uses them.
 - `public/demo.js` only draws the status, result and event log.
 
 ## Example 1: course (`/course`)
@@ -146,6 +147,40 @@ HealthierBusiness.mount(el, {
 
 On the server this ends in `hb.embed.createOhFormSession({ requestId, formShortcode, origin })`.
 
+## Example 4: start access, then embed (`/access`)
+
+A course only opens once the candidate's training access is started, the terms are accepted and the access has not ended. The embed never starts access itself: **your server** does, through the API, and the page then opens the course as in example 1.
+
+> **Needs SDK 0.2.0** (`accessStart`, typed access errors, `onTermsAccepted`). It is not on npm yet, so use the local checkout for this example (see [Using a local copy of the SDK](#using-a-local-copy-of-the-sdk)). The Pactyard sandbox does not simulate the access calls yet, so do not expect this page to work against it yet. The page and routes were checked only against a local fake of the Hub.
+
+The page has two steps:
+
+1. **The candidate's access.** It shows the state per course group (`GET /api/access/state`, which calls `hb.onlineTraining.candidates.access()`). **Start access** calls `POST /api/access/start`, which calls `hb.onlineTraining.candidates.accessStart()` with an idempotency key made from one id per button press (a double click starts and charges once). The page shows one of:
+   - **enabled**: credits were taken (or the groups were free); the course can be opened.
+   - **a payment link**: the candidate pays for the groups. The page shows it as a link that opens in a new tab. The link is shown only in that answer; your server also gets the `online-training.access.started` webhook (`source: "payment"`) when the candidate has paid.
+   - **renewal approval**: `409 renewal_approval_required`. The request is recorded and the agency emailed; the page shows the message.
+2. **Open the course.** The same `HealthierBusiness.mount()` as example 1. If access is not in place the route answers a typed error and `onError` receives `{ code, message, details }`, with `details.next` (`start_access`, `pay`, `await_approval`, `renew`) saying what to do. The first screen of the frame is the Hub terms for a candidate who has not accepted them: `onTermsAccepted({ version, acceptedAt })` fires when they do, and the log shows it.
+
+```js
+// server (access.mjs)
+const { data } = await hb.onlineTraining.candidates.accessStart(
+  { candidate_ref: candidateRef, body: { return_url } },
+  { idempotencyKey: `examples-start-${attempt}` },
+);
+const result = accessStartResult(data); // switch on result.outcome
+
+// page (public/access.js)
+HealthierBusiness.mount(el, {
+  endpoint: '/api/hb/embed', kind: 'course', courseId,
+  onTermsAccepted: ({ version }) => showTermsAccepted(version),
+  onError: ({ code, details }) => showWhatToDo(code, details?.next),
+});
+```
+
+The server returns the page only what it needs: never the candidate ref or the credit balance. Events such as `completed` can be forged by the person at the browser, so the page only updates the screen: confirm results through the API or a webhook before issuing a certificate.
+
+For a real integration, replace the demo's single candidate with your own login (as in example 1) and give the payment link to the candidate yourself (email or your own page).
+
 ## Events
 
 | Event | Callback | Data | Sent for |
@@ -156,7 +191,8 @@ On the server this ends in `hb.embed.createOhFormSession({ requestId, formShortc
 | `passed` | `onPassed` | `score`, `passMark` | test |
 | `failed` | `onFailed` | `score`, `passMark` | test |
 | `submitted` | `onSubmitted` | `requestId` | OH form |
-| `error` | `onError` | `code`, `message` | all |
+| `terms-accepted` | `onTermsAccepted` | `version`, `acceptedAt` | all, for a candidate who had not accepted the terms |
+| `error` | `onError` | `code`, `message`, `details` (access codes only) | all |
 | `token-expiring` | `onEvent` | `expires_at` | all; the SDK renews the token for you |
 
 Every event also reaches `onEvent({ name, data })`, which the examples use for the log. The payloads are typed by the SDK exactly as the frame sends them.
@@ -182,6 +218,9 @@ The frame resizes itself and the SDK follows, so the page grows with the content
 | `token_used` or `token_expired` | The launch token was used twice, or sat unused for over 5 minutes | Reload. Each mount creates a new session. |
 | `403 session_not_bound` on refresh | The server restarted, or another instance handled the refresh | Reload. With several instances, give the handler a shared `bindings` store (see the SDK README). |
 | `401` from `/api/hb/embed` | `authorize` refused | Check that the ids in `.env` are set and match what the page asks for. |
+| `course_access_required`, `payment_pending`, `renewal_approval_required` or `access_expired` in the status line or log | The candidate's access is not in place. | Read `details.next`: start access (example 4), have the candidate pay the link, approve the renewal, or renew. |
+| `terms_required` in the log | The candidate has not accepted the terms. | The frame shows them first; the candidate accepts there. |
+| `/access` fails with `TypeError` or `accessStart is not a function` | The installed SDK is older than 0.2.0. | Use the local checkout of the SDK until 0.2.0 is on npm. |
 | `404` or `409` when creating a session | The id is not in the sandbox, or the candidate has finished it | Use the sandbox ids. A finished course (`course_not_pending`) cannot be reopened. |
 | The server says it cannot start | `HB_API_KEY` missing or not valid | Set `HB_API_KEY` in `.env` to the key you were issued. |
 
@@ -197,7 +236,7 @@ npm install --no-save ../hb-sdk
 cd ../hb-sdk && npm link && cd ../hb-sdk-examples && npm link @healthier-business/hub-sdk
 ```
 
-`package.json` keeps the normal range `^0.1.0`, so it works unchanged with the package from npm. There is no lock file (`.npmrc` sets `package-lock=false`), so every install picks the newest `0.1.x`.
+**Example 4 needs SDK 0.2.0. Until it is published, `npm install` gets 0.1.x, which has no `accessStart`: install the local checkout (`npm install --no-save ../hb-sdk`, built with `npm run build`) before running `/access`.** `package.json` keeps the range `^0.1.0` so that `npm install` keeps working before the release; once 0.2.0 is on npm, change it to `^0.2.0`. There is no lock file (`.npmrc` sets `package-lock=false`), so every install picks the newest matching version.
 
 ## License
 
