@@ -1,10 +1,11 @@
-// One small server for all three examples. It holds the API key, creates embed sessions with the SDK
+// One small server for all four examples. It holds the API key, creates embed sessions with the SDK
 // and serves the static pages in ./public. No framework, no extra dependencies.
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { HealthierBusiness } from '@healthier-business/hub-sdk';
+import { createAccessRoutes } from './access.mjs';
 
 try {
   process.loadEnvFile('.env');
@@ -66,6 +67,9 @@ const embedRoute = hb.embed.handler({
   onError: (error) => console.error('embed error:', error),
 });
 
+// Example 4: read the access state and start access (see access.mjs).
+const accessRoutes = createAccessRoutes({ hb, candidateRef: demo.candidateRef, returnUrl: `${appOrigin}/access` });
+
 // The pages may only frame the Hub. This is also the first thing to check when a frame stays blank.
 const hubOrigin = new URL(hb.baseUrl).origin;
 const securityHeaders = {
@@ -74,7 +78,7 @@ const securityHeaders = {
   'referrer-policy': 'strict-origin-when-cross-origin',
 };
 
-const pages = { '/': 'index.html', '/course': 'course.html', '/test': 'test.html', '/oh-form': 'oh-form.html' };
+const pages = { '/': 'index.html', '/course': 'course.html', '/test': 'test.html', '/oh-form': 'oh-form.html', '/access': 'access.html' };
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8' };
 
 async function readBody(req) {
@@ -105,6 +109,15 @@ const server = createServer(async (req, res) => {
       res.writeHead(response.status, Object.fromEntries(response.headers));
       res.end(await response.text());
       return;
+    }
+
+    if (pathname.startsWith('/api/access/')) {
+      const response = await accessRoutes(await toFetchRequest(req), pathname);
+      if (response) {
+        res.writeHead(response.status, Object.fromEntries(response.headers));
+        res.end(await response.text());
+        return;
+      }
     }
 
     if (pathname === '/api/config' && req.method === 'GET') {

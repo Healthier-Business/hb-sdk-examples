@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Start access, then embed</title>
+  <link rel="stylesheet" href="/demo.css" />
+</head>
+<body>
+  <main>
+    <nav><a href="/">All examples</a></nav>
+    <h1>Start access, then embed</h1>
+    <p class="lead">A course only opens once the candidate's training access is started. Start it from your server, then open the course.</p>
+
+    <div class="card">
+      <h2>1. The candidate's access</h2>
+      <p id="state">Loading...</p>
+      <div class="row">
+        <button id="start" type="button">Start access</button>
+        <button id="reload" type="button">Check again</button>
+        <span id="status" class="status"></span>
+      </div>
+      <p id="outcome" hidden></p>
+      <p id="pay" hidden>Give the candidate this one-time link: <a id="pay-link" target="_blank" rel="noopener noreferrer"></a></p>
+    </div>
+
+    <div class="card">
+      <h2>2. The course</h2>
+      <div class="row">
+        <button id="open" type="button">Open the course</button>
+        <span id="course-status" class="status"></span>
+      </div>
+    </div>
+
+    <div id="frame" class="frame" hidden></div>
+
+    <div id="result" class="card" hidden>
+      <h2 id="result-title"></h2>
+      <p id="result-details"></p>
+    </div>
+
+    <div class="card">
+      <h2>Events from the frame and answers from your server</h2>
+      <pre id="log"></pre>
+    </div>
+  </main>
+  <script src="/vendor/hb-embed.min.js"></script>
+  <script src="/demo.js"></script>
+  <script src="/access.js"></script>
+</body>
+</html>
