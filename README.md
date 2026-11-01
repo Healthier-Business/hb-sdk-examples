@@ -1,6 +1,6 @@
 # Healthier Business Hub SDK examples
 
-Four small, working examples of the [Healthier Business Hub SDK](https://www.npmjs.com/package/@healthier-business/hub-sdk) (`@healthier-business/hub-sdk`): an **online training course**, a **test**, an **occupational health (OH) form**, each shown inline in your own page, and **starting a candidate's access** (credits, payment link or renewal approval) before the course opens.
+Five small, working examples of the [Healthier Business Hub SDK](https://www.npmjs.com/package/@healthier-business/hub-sdk) (`@healthier-business/hub-sdk`): an **online training course**, a **test**, an **occupational health (OH) form**, each shown inline in your own page, and **starting a candidate's access** (credits, payment link or renewal approval) before the course opens, plus a short script that shows how to check **API access approval** for the sensitive areas.
 
 Each example is plain HTML and JavaScript in the browser, plus one tiny Node server (`node:http`, no framework, no dependencies except the SDK). The server holds your API key and creates the embed session. The browser only receives a short-lived, single-use launch token.
 
@@ -181,6 +181,36 @@ The server returns the page only what it needs: never the candidate ref or the c
 
 For a real integration, replace the demo's single candidate with your own login (as in example 1) and give the payment link to the candidate yourself (email or your own page).
 
+## Example 5: API access approval (`api-access.mjs`)
+
+Occupational Health and DBS & Right To Work need a one-off approval from the Hub team before a **live** key can call them or receive their webhook events (the sandbox is always open). The script has no page and no server. It reads the status with `hb.account.apiAccess.get()`, calls Occupational Health and catches the refusal, and creates a webhook endpoint only when the area is approved.
+
+> **Needs SDK 0.3.0 or newer** (`hb.account.apiAccess`, `ApiAccessError`, `WebhookEventsNotApprovedError`).
+
+```bash
+HB_API_KEY=hbk_... node api-access.mjs                 # a live key
+HB_API_KEY=hbk_test_... HB_BASE_URL=https://dev.hbcompliance.co.uk/sandbox node api-access.mjs   # the sandbox
+```
+
+```js
+import { ApiAccessError } from '@healthier-business/hub-sdk';
+
+const { data: areas } = await hb.account.apiAccess.get(); // area, label, sensitive, status, decided_at
+try {
+  await hb.occupationalHealth.requests.list();
+} catch (e) {
+  if (e instanceof ApiAccessError) {
+    console.warn(e.areas, e.code, e.state, e.docsUrl); // never retried: fix the approval
+  } else throw e;
+}
+```
+
+To see each refusal in the sandbox, send the header `X-HB-Simulate-Access` with `not_approved`, `pending`, `rejected` or `revoked`:
+
+```js
+await hb.occupationalHealth.requests.list({}, { headers: { 'X-HB-Simulate-Access': 'pending' } });
+```
+
 ## Events
 
 | Event | Callback | Data | Sent for |
@@ -220,6 +250,7 @@ The frame resizes itself and the SDK follows, so the page grows with the content
 | `401` from `/api/hb/embed` | `authorize` refused | Check that the ids in `.env` are set and match what the page asks for. |
 | `course_access_required`, `payment_pending`, `renewal_approval_required` or `access_expired` in the status line or log | The candidate's access is not in place. | Read `details.next`: start access (example 4), have the candidate pay the link, approve the renewal, or renew. |
 | `terms_required` in the log | The candidate has not accepted the terms. | The frame shows them first; the candidate accepts there. |
+| `api_access_not_approved`, `api_access_pending`, `api_access_rejected` or `api_access_revoked` | The live key holds a scope of Occupational Health or DBS & Right To Work and your organisation is not approved for it. | Ask for, or follow up, the approval in the Hub under Developer > API access (example 5). Do not retry. |
 | `/access` fails with `TypeError` or `accessStart is not a function` | The installed SDK is older than 0.2.0. | Update the SDK: `npm install @healthier-business/hub-sdk@latest`. |
 | `404` or `409` when creating a session | The id is not in the sandbox, or the candidate has finished it | Use the sandbox ids. A finished course (`course_not_pending`) cannot be reopened. |
 | The server says it cannot start | `HB_API_KEY` missing or not valid | Set `HB_API_KEY` in `.env` to the key you were issued. |
@@ -236,7 +267,7 @@ npm install --no-save ../hb-sdk
 cd ../hb-sdk && npm link && cd ../hb-sdk-examples && npm link @healthier-business/hub-sdk
 ```
 
-**Example 4 needs SDK 0.2.0 or newer.** `package.json` asks for `^0.2.0`. There is no lock file (`.npmrc` sets `package-lock=false`), so every install picks the newest matching version.
+**Example 4 needs SDK 0.2.0 or newer and example 5 needs 0.3.0 or newer.** `package.json` asks for `^0.3.0`. There is no lock file (`.npmrc` sets `package-lock=false`), so every install picks the newest matching version.
 
 ## License
 
