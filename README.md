@@ -211,6 +211,10 @@ To see each refusal in the sandbox, send the header `X-HB-Simulate-Access` with 
 await hb.occupationalHealth.requests.list({}, { headers: { 'X-HB-Simulate-Access': 'pending' } });
 ```
 
+## Mobile apps
+
+A React Native, Flutter, iOS or Android app shows the same page in a web view. See [mobile](mobile) for the page (`/mobile`), the bridge and one wrapper per platform.
+
 ## Events
 
 | Event | Callback | Data | Sent for |
