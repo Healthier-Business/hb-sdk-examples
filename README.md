@@ -213,7 +213,7 @@ await hb.occupationalHealth.requests.list({}, { headers: { 'X-HB-Simulate-Access
 
 ## Mobile apps
 
-A React Native, Flutter, iOS or Android app shows the same page in a web view. See [mobile](mobile) for the page (`/mobile`), the bridge and one wrapper per platform.
+A React Native, Flutter, iOS or Android app shows the same page in a web view. See [mobile](mobile) for the page (`/mobile`) and the bridge, and [hb-sdk-mobile](https://github.com/Healthier-Business/hb-sdk-mobile) for one package per platform.
 
 ## Events
 
