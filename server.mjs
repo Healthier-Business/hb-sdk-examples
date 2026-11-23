@@ -78,7 +78,7 @@ const securityHeaders = {
   'referrer-policy': 'strict-origin-when-cross-origin',
 };
 
-const pages = { '/': 'index.html', '/course': 'course.html', '/test': 'test.html', '/oh-form': 'oh-form.html', '/access': 'access.html' };
+const pages = { '/': 'index.html', '/course': 'course.html', '/test': 'test.html', '/oh-form': 'oh-form.html', '/access': 'access.html', '/mobile': 'mobile.html' };
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8' };
 
 async function readBody(req) {

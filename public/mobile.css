@@ -1,0 +1,7 @@
+:root { color-scheme: light; --ink: #1c2733; --bad: #b3261e; --good: #1b7a3d; }
+* { box-sizing: border-box; }
+body { margin: 0; font: 16px/1.5 system-ui, sans-serif; color: var(--ink); background: #fff; }
+.status { margin: 0; padding: 8px 12px; font-size: 0.9rem; }
+.status.ok { color: var(--good); }
+.status.bad { color: var(--bad); }
+#frame { min-height: 320px; }
